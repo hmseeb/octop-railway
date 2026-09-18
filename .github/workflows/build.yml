@@ -28,6 +28,43 @@ jobs:
         run: |
           sed -i 's|exec octop run --host 0.0.0.0|exec octop run --host "${OCTOP_BIND_HOST:-::}"|' upstream/docker/docker-entrypoint.sh
           grep -n 'exec octop run' upstream/docker/docker-entrypoint.sh
+      - name: Add dual-stack sitecustomize and a final image stage
+        # uvicorn single-worker mode goes through asyncio's create_server, which
+        # sets IPV6_V6ONLY=1 for explicit hosts, so `::` alone is v6-only while
+        # Railway's health checker speaks IPv4. sitecustomize coerces the flag
+        # to 0 before bind: one socket, both stacks. Verified empirically in the
+        # built image (v6-only without it, dual-stack with it).
+        run: |
+          cat > upstream/docker/railway-sitecustomize.py <<'EOF'
+          """Railway image shim: make every IPv6 listener dual-stack.
+          asyncio's create_server sets IPV6_V6ONLY=1 on sockets for explicit hosts,
+          which leaves uvicorn bound to :: unreachable over IPv4. Railway's private
+          network dials IPv6 while its health checker speaks IPv4, so one socket must
+          serve both. Coercing the flag before bind is the standard dual-stack recipe.
+          """
+          import socket
+
+          _original_socket = socket.socket
+
+
+          class _DualStackSocket(_original_socket):
+              def setsockopt(self, level, optname, value, *args):
+                  if level == socket.IPPROTO_IPV6 and optname == socket.IPV6_V6ONLY:
+                      value = 0
+                  return super().setsockopt(level, optname, value, *args)
+
+
+          socket.socket = _DualStackSocket
+          socket.SocketType = _DualStackSocket
+          EOF
+          cat >> upstream/docker/Dockerfile <<'EOF'
+
+          # Railway: dual-stack shim (see railway-sitecustomize.py).
+          FROM runtime
+          COPY docker/railway-sitecustomize.py /opt/octop-railway/sitecustomize.py
+          ENV PYTHONPATH=/opt/octop-railway
+          EOF
+          tail -5 upstream/docker/Dockerfile
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         with:
@@ -42,7 +79,7 @@ jobs:
           # Railway runs amd64. arm64 would double a build that is already long.
           platforms: linux/amd64
           tags: |
-            ghcr.io/${{ github.repository_owner }}/octop-railway:1.0.0-r1
+            ghcr.io/${{ github.repository_owner }}/octop-railway:1.0.0-r2
             ghcr.io/${{ github.repository_owner }}/octop-railway:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max

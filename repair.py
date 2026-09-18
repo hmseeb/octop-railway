@@ -36,7 +36,7 @@ def var(default=None, optional=False, description=None):
 
 VARIABLES = {
     "octop": {
-        "HOME": var("/data"),
+        "HOME": var("/data/octop"),
         # Railway injects PORT=8080 on image services; pin it to the app's port
         # so the injected var, OCTOP_PORT and the domain target port all agree.
         "PORT": var("8088"),
