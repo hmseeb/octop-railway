@@ -4,7 +4,7 @@ One-click Railway template for [Octop](https://github.com/TencentCloud/Octop),
 a self-hosted multi-user AI assistant: web dashboard, IM channels, cron
 automation, and per-user agent teams in one process.
 
-<!-- Deploy button URL goes here after publish -->
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/octop-1)
 
 ## What this repo is
 
