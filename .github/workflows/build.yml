@@ -1,0 +1,48 @@
+name: Build and push image
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["README.md", "TEMPLATE_OVERVIEW.md", "template.json", "test/**", "*.py"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  packages: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    # Node dashboard build plus pip install plus a Playwright Chromium download.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out upstream Octop at the pinned tag
+        uses: actions/checkout@v4
+        with:
+          repository: TencentCloud/Octop
+          ref: v1.0.0
+          path: upstream
+      - name: Patch entrypoint for Railway's IPv6 private network
+        # The stock entrypoint hardcodes `--host 0.0.0.0`, which overrides
+        # OCTOP_BIND_HOST (CLI flag > env > config) and is unreachable on
+        # Railway. Make the flag honor the env, defaulting to a dual-stack
+        # wildcard.
+        run: |
+          sed -i 's|exec octop run --host 0.0.0.0|exec octop run --host "${OCTOP_BIND_HOST:-::}"|' upstream/docker/docker-entrypoint.sh
+          grep -n 'exec octop run' upstream/docker/docker-entrypoint.sh
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: upstream
+          file: upstream/docker/Dockerfile
+          push: true
+          # Railway runs amd64. arm64 would double a build that is already long.
+          platforms: linux/amd64
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/octop-railway:1.0.0-r1
+            ghcr.io/${{ github.repository_owner }}/octop-railway:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

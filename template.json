@@ -1,0 +1,41 @@
+{
+  "name": "Octop",
+  "description": "Self-hosted multi-user AI assistant with agents, IM channels and cron",
+  "workspaceId": "fc4796db-2c6c-4354-a564-d4a1d900af53",
+  "upstream": {
+    "repository": "https://github.com/TencentCloud/Octop",
+    "version": "v1.0.0",
+    "$note": "Upstream ships no image (no Docker Hub, GHCR package private/absent). We build docker/Dockerfile at tag v1.0.0 in .github/workflows/build.yml and push ghcr.io/hmseeb/octop-railway:1.0.0-r1. One patch in the workflow: the stock entrypoint hardcodes `octop run --host 0.0.0.0` which overrides OCTOP_BIND_HOST (CLI > env > config.json, src/octop/cli/commands/run.py resolve_bind) and is unreachable on Railway's IPv6 private network; the patch makes the flag honor OCTOP_BIND_HOST, default ::."
+  },
+  "topology": {
+    "$note": "Single service, single volume. Upstream is one process (FastAPI + uvicorn + APScheduler + agent runtime) with all state under ~/.octop (SQLite WAL default). No web/worker split exists upstream, so the no-shared-volume rule never comes into play. PostgreSQL is optional upstream; deliberately not templated, SQLite on the volume is the upstream default."
+  },
+  "services": {
+    "octop": {
+      "image": "ghcr.io/hmseeb/octop-railway:1.0.0-r1",
+      "startCommand": "/usr/local/bin/docker-entrypoint.sh",
+      "startCommandNote": "Railway discards the image ENTRYPOINT and execs the start command raw; pointing it at the entrypoint script preserves the first-run bootstrap (octop init, admin creation, credential.txt fallback).",
+      "healthcheckPath": "/api/health",
+      "port": 8088,
+      "volume": {
+        "mountPath": "/data/.octop",
+        "$note": "HOME=/data puts ~/.octop on the volume. Holds the SQLite control-plane DB, agent workspaces, uploads, credential.txt."
+      },
+      "variables": {
+        "HOME": "/data",
+        "PORT": "8088",
+        "PORT_note": "Railway injects PORT=8080 on image services and healthchecks against it; pinning PORT=8088 keeps the injected var aligned with OCTOP_PORT and the domain target port.",
+        "OCTOP_PORT": "8088",
+        "OCTOP_BIND_HOST": "::",
+        "OCTOP_ADMIN_USERNAME": "admin",
+        "OCTOP_DEFAULT_PASSWORD": "${{secret(32)}}",
+        "OCTOP_DEFAULT_PASSWORD_note": "Entrypoint runs octop init on first boot only (octop.db absent). Password policy is >=8 chars with letters and digits; secret(32) is alphanumeric so it passes, and the entrypoint falls back to a random password written to credential.txt if ever rejected.",
+        "OPENAI_API_KEY": "prompted, optional; providers can also be configured in the dashboard later"
+      }
+    }
+  },
+  "verification": {
+    "journey": "Deploy -> open domain -> login as admin with OCTOP_DEFAULT_PASSWORD -> dashboard loads -> configure provider -> chat with agent",
+    "contractTests": "test/contract.sh boots the exact image+volume shape and checks health, dashboard HTML, login, JWT, unauth rejection, dual-stack bind, wrong-password rejection"
+  }
+}
