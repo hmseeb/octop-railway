@@ -18,7 +18,7 @@ sys.path.insert(0, str(pathlib.Path("~/.claude/skills/create-template-for-railwa
 import rw  # noqa: E402
 
 WORKSPACE = "fc4796db-2c6c-4354-a564-d4a1d900af53"  # Auromations
-IMAGE = "ghcr.io/hmseeb/octop-railway:1.0.0-r1"
+IMAGE = "ghcr.io/hmseeb/octop-railway:1.0.0-r2"
 
 
 def gql(doc, variables=None, internal=False):
