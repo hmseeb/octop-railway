@@ -16,7 +16,7 @@ import rw  # noqa: E402
 
 WORKSPACE = "fc4796db-2c6c-4354-a564-d4a1d900af53"  # Auromations
 NAME = "Octop"
-ICON = "https://avatars.githubusercontent.com/u/18470292?v=4"  # TencentCloud org avatar, square
+ICON = "https://raw.githubusercontent.com/hmseeb/octop-railway/ea78288db80ac804a11a543847064d0ce96a0e86/assets/octop-icon.svg"  # square mark from upstream wordmark
 
 # Password policy is >=8 chars with letters and digits; the explicit alphabet
 # keeps the generator alphanumeric. If it were ever rejected, the entrypoint

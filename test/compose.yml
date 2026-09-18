@@ -3,6 +3,8 @@
 services:
   octop:
     image: ghcr.io/hmseeb/octop-railway:1.0.0-r1
+    # Railway runs amd64; the image is amd64-only, so local runs emulate.
+    platform: linux/amd64
     ports:
       - "8088:8088"
     volumes:

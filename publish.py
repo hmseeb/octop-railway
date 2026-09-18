@@ -14,10 +14,10 @@ WORKSPACE = "fc4796db-2c6c-4354-a564-d4a1d900af53"  # Auromations
 NAME = "Octop"
 CATEGORY = "Other"
 DESCRIPTION = "Multi-user self-hosted AI assistant: agents, IM channels, cron, browser"
-# Square org avatar; Railway rejects GitHub avatar URLs for the listing image in
-# some templates, but this field took one for the service tile in repair.py. If
-# publish rejects it, swap to a raw.githubusercontent asset pinned to a commit.
-ICON = "https://avatars.githubusercontent.com/u/18470292?v=4"
+# Square mark extracted from the upstream wordmark (its black text vanishes on
+# Railway's dark canvas). Pinned to a commit in our own build repo; GitHub
+# avatar URLs are rejected by this field.
+ICON = "https://raw.githubusercontent.com/hmseeb/octop-railway/ea78288db80ac804a11a543847064d0ce96a0e86/assets/octop-icon.svg"
 
 template_id = sys.argv[1]
 readme = pathlib.Path(__file__).with_name("TEMPLATE_OVERVIEW.md").read_text()
