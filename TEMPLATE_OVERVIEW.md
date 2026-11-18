@@ -32,9 +32,9 @@ credential file, so redeploys keep every conversation and setting.
 
 ### Deployment Dependencies
 
-- One Railway service running the Octop image (built from upstream v1.0.0, see
+- One Railway service running the Octop image (built from upstream v1.0.2, see
   Implementation Details).
-- One volume mounted at `/data/.octop` for the database and workspaces.
+- One volume mounted at `/data/octop` for the database and workspaces.
 - An LLM provider key (OpenAI-compatible) to make agents answer; it can be set
   as `OPENAI_API_KEY` at deploy time or added later in the dashboard.
 
@@ -44,8 +44,9 @@ First boot runs the setup wizard automatically: it creates the admin account
 (`OCTOP_ADMIN_USERNAME`, default `admin`) with the generated
 `OCTOP_DEFAULT_PASSWORD` shown in the service variables. Open your service
 domain, log in, and change the password afterwards. If the password variable is
-ever cleared, a random password is generated and written to `credential.txt` on
-the volume instead.
+cleared before the first boot, no admin is created; the dashboard opens a setup
+wizard instead, unlocked by the password in `.octop/octop-login.txt` on the
+volume.
 
 Configuration:
 

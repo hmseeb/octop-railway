@@ -8,6 +8,10 @@ cd "$(dirname "$0")"
 PASSWORD="${CONTRACT_PASSWORD:-ContractPass123}"
 export CONTRACT_PASSWORD="$PASSWORD"
 BASE="http://localhost:8088"
+# Image under test, and the upstream release CI builds it from (the workflow's
+# pinned ref): the image must carry exactly that release.
+export OCTOP_IMAGE="${OCTOP_IMAGE:-ghcr.io/hmseeb/octop-railway:1.0.2-r1}"
+EXPECTED_VERSION=$(sed -n 's/^ *ref: v\(.*\)$/\1/p' ../.github/workflows/build.yml)
 COMPOSE="docker compose -f compose.yml -p octop-contract"
 pass=0; fail=0
 
@@ -56,6 +60,22 @@ check "answers on IPv4 loopback (dual-stack socket)" $?
 code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$BASE/api/auth/login" \
   -H 'Content-Type: application/json' -d '{"username":"admin","password":"WrongPass999"}')
 [ "$code" != "200" ]; check "wrong password rejected ($code)" $?
+
+# The image must carry the upstream release its tag names.
+ver=$(docker exec octop-contract-octop-1 octop --version 2>/dev/null)
+echo "$ver" | grep -qF "$EXPECTED_VERSION"; check "octop --version is $EXPECTED_VERSION (got: ${ver:-none})" $?
+
+# Railway in-place restarts keep the container filesystem and the volume: the
+# start command must boot cleanly again without re-running init.
+docker restart octop-contract-octop-1 >/dev/null 2>&1
+sleep 3
+wait_for "$BASE/api/health" 300
+check "boots cleanly after an in-place restart" $?
+inits=$(docker logs octop-contract-octop-1 2>&1 | grep -c '首次启动')
+[ "$inits" -le 1 ]; check "first-run init ran once across restarts ($inits)" $?
+token=$(curl -s -X POST "$BASE/api/auth/login" -H 'Content-Type: application/json' \
+  -d "{\"username\":\"admin\",\"password\":\"$PASSWORD\"}" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("access_token",""))' 2>/dev/null)
+[ -n "$token" ]; check "admin login survives the restart" $?
 
 echo
 echo "$pass passed, $fail failed"

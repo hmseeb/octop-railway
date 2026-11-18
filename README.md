@@ -9,7 +9,7 @@ automation, and per-user agent teams in one process.
 ## What this repo is
 
 - `.github/workflows/build.yml` — builds upstream `docker/Dockerfile` at tag
-  `v1.0.0` and pushes `ghcr.io/hmseeb/octop-railway:1.0.0-r1`, with one patch:
+  `v1.0.2` and pushes `ghcr.io/hmseeb/octop-railway:1.0.2-r1`, with one patch:
   the stock entrypoint hardcodes `--host 0.0.0.0`, which overrides
   `OCTOP_BIND_HOST` and is unreachable on Railway's IPv6 private network; the
   patch makes the flag honor the env (default `::`).
@@ -26,7 +26,7 @@ automation, and per-user agent teams in one process.
 
 ## Layout on Railway
 
-One service (`octop`), one volume at `/data/.octop` (SQLite control-plane DB,
+One service (`octop`), one volume at `/data/octop` (SQLite control-plane DB,
 agent workspaces, credential.txt), public domain targeting port 8088.
 
 First boot runs `octop init`: admin user `admin` with the generated

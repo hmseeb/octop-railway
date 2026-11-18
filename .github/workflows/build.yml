@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: TencentCloud/Octop
-          ref: v1.0.0
+          ref: v1.0.2
           path: upstream
       - name: Patch entrypoint for Railway's IPv6 private network
         # The stock entrypoint hardcodes `--host 0.0.0.0`, which overrides
@@ -79,7 +79,7 @@ jobs:
           # Railway runs amd64. arm64 would double a build that is already long.
           platforms: linux/amd64
           tags: |
-            ghcr.io/${{ github.repository_owner }}/octop-railway:1.0.0-r2
+            ghcr.io/${{ github.repository_owner }}/octop-railway:1.0.2-r1
             ghcr.io/${{ github.repository_owner }}/octop-railway:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
