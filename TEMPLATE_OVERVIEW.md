@@ -55,6 +55,9 @@ Configuration:
   dashboard.
 - `OCTOP_ADMIN_USERNAME` — first-boot admin username (default `admin`).
 - `OPENAI_API_KEY` — optional; providers are fully manageable in the dashboard.
+- Anthropic: with the bundled Anthropic provider preset, set the base URL to
+  `https://api.anthropic.com` (without `/v1`). The preset's `/v1` URL returns
+  404 on chat.
 
 Upgrading: bump the image tag to a newer `ghcr.io/hmseeb/octop-railway` release
 and redeploy. Data lives on the volume and migrations run on boot.

@@ -31,3 +31,7 @@ agent workspaces, credential.txt), public domain targeting port 8088.
 
 First boot runs `octop init`: admin user `admin` with the generated
 `OCTOP_DEFAULT_PASSWORD` from the variables tab.
+
+Anthropic: with the bundled Anthropic provider preset, set the base URL to
+`https://api.anthropic.com` (without `/v1`). The preset's `/v1` URL returns 404
+on chat (Octop v1.0.2).
